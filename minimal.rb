@@ -5,6 +5,7 @@ run "if uname | grep -q 'Darwin'; then pgrep spring | xargs kill -9; fi"
 inject_into_file 'Gemfile', before: 'group :development, :test do' do
   <<~RUBY
     gem 'autoprefixer-rails'
+    gem 'database_cleaner-active_record'
     gem 'font-awesome-sass'
     gem 'simple_form'
 
@@ -36,6 +37,22 @@ run 'unzip stylesheets.zip -d app/assets && rm stylesheets.zip && mv app/assets/
 # Dev environment
 ########################################
 gsub_file('config/environments/development.rb', /config\.assets\.debug.*/, 'config.assets.debug = false')
+
+# Seed file
+########################################
+remove_file 'db/seeds.rb'
+file 'db/seeds.rb', <<-RUBY
+require 'database_cleaner/active_record'
+
+# write your `.destroy_all` before this line
+
+DatabaseCleaner.allow_production = true
+DatabaseCleaner.allow_remote_database_url = true
+DatabaseCleaner.strategy = :truncation
+DatabaseCleaner.clean
+
+# write your new seeds after this line
+RUBY
 
 # Layout
 ########################################
